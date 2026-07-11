@@ -2,8 +2,74 @@
 
 VMS-X is an industry-grade FastAPI + Angular platform for full-timeline video intelligence, object tracking, visual memory, VLM-assisted open-world object naming, human-in-the-loop annotation, dataset versioning, training orchestration, and safe model registry activation.
 
+## Project Owner
+
+<img align="right" alt="AI software engineering workspace" src="https://media0.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif?cid=ecf05e47lceza4wyeg9s0b334j6pfmq0nl2is6elx8zxqt2l&ep=v1_gifs_search&rid=giphy.gif&ct=g" width="380" height="245" />
+
+### Hey there, I am Md. Zahid Hasan Riad
+
+I am a Computer Science researcher, prospective PhD applicant, and Software Engineer focused on building production-grade AI systems. My work connects deep learning research with practical backend engineering, especially in computer vision, object detection, document intelligence, healthcare AI, and cloud-based AI platforms.
+
+- Research interests: Deep Learning, Computer Vision, NLP, Machine Learning, Generative AI, Large Language Models, Vision-Language Models, and Document Intelligence.
+- Current research direction: SkySeaLand Dataset, SkyDet, object detection and classification, 3D medical image classification, healthcare AI, Bengali NLP, VLMs, and cloud-based AI systems.
+- Engineering focus: .NET backend development, Financial ERP systems, FastAPI services, Angular applications, AI integration, and scalable data-driven workflows.
+- Collaboration areas: AI/ML research, dataset creation, computer vision, document AI, healthcare AI, model evaluation, and research-oriented software platforms.
+- Contact: [mzhr.riad@gmail.com](mailto:mzhr.riad@gmail.com)
+
+## Professional Skills
+
+### Programming Languages
+
+![CSharp](https://img.shields.io/badge/C%23-000?&logo=csharp&logoColor=239120)
+![Python](https://img.shields.io/badge/Python-000?&logo=Python)
+![SQL](https://img.shields.io/badge/SQL-000?&logo=MySQL)
+![TypeScript](https://img.shields.io/badge/TypeScript-000?&logo=TypeScript)
+![JavaScript](https://img.shields.io/badge/JavaScript-000?&logo=JavaScript)
+![C](https://img.shields.io/badge/C-000?&logo=C)
+
+### AI, Research, and Data Science
+
+![Deep Learning](https://img.shields.io/badge/Deep%20Learning-000?&logo=pytorch)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-000?&logo=scikitlearn)
+![Computer Vision](https://img.shields.io/badge/Computer%20Vision-000?&logo=opencv)
+![NLP](https://img.shields.io/badge/NLP-000?&logo=googlegemini)
+![Generative AI](https://img.shields.io/badge/Generative%20AI-000?&logo=openai)
+![LLMs](https://img.shields.io/badge/LLMs-000?&logo=openai)
+![Vision Language Models](https://img.shields.io/badge/Vision--Language%20Models-000?&logo=huggingface)
+![Document Intelligence](https://img.shields.io/badge/Document%20Intelligence-000?&logo=googledocs)
+![OCR](https://img.shields.io/badge/OCR-000?&logo=googledocs)
+![RAG](https://img.shields.io/badge/RAG-000?&logo=openai)
+![Medical Imaging](https://img.shields.io/badge/Medical%20Imaging-000?&logo=python)
+![Dataset Engineering](https://img.shields.io/badge/Dataset%20Engineering-000?&logo=databricks)
+
+### Frameworks, Platforms, and Tools
+
+![DotNet](https://img.shields.io/badge/.NET-000?&logo=dotnet&logoColor=512BD4)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-000?&logo=dotnet&logoColor=512BD4)
+![Entity Framework Core](https://img.shields.io/badge/Entity%20Framework%20Core-000?&logo=dotnet&logoColor=512BD4)
+![Angular](https://img.shields.io/badge/Angular-000?&logo=Angular&logoColor=DD0031)
+![FastAPI](https://img.shields.io/badge/FastAPI-000?&logo=FastAPI)
+![PyTorch](https://img.shields.io/badge/PyTorch-000?&logo=PyTorch)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-000?&logo=TensorFlow)
+![OpenCV](https://img.shields.io/badge/OpenCV-000?&logo=OpenCV)
+![Hugging Face](https://img.shields.io/badge/Hugging%20Face-000?&logo=huggingface)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-000?&logo=PostgreSQL)
+![SQL Server](https://img.shields.io/badge/SQL%20Server-000?&logo=microsoftsqlserver)
+![Docker](https://img.shields.io/badge/Docker-000?&logo=Docker)
+![Linux](https://img.shields.io/badge/Linux-000?&logo=Linux)
+![Git](https://img.shields.io/badge/Git-000?&logo=Git)
+
+### Applied Strengths
+
+- AI vision architecture, object detection pipelines, model registry workflows, and video intelligence systems.
+- Backend architecture with clean service layers, repositories, DTOs, authentication, and API security.
+- Research-ready software engineering for dataset preparation, training orchestration, evaluation, and reproducible experiments.
+- Full-stack delivery with FastAPI, Angular, Docker, SQL databases, and cloud AI provider integration.
+
 ## Visual Documentation
 
+- [Project Owner](#project-owner)
+- [Professional Skills](#professional-skills)
 - [Tech Stack](#tech-stack)
 - [System Architecture](#system-architecture)
 - [Main User Workflow](#main-user-workflow)
