@@ -78,6 +78,3 @@ npm start
 - OpenAI and Gemini remain optional providers. Hybrid mode tries `huggingface,gemini,openai` by default.
 - If Hugging Face is unavailable or unconfigured, adaptive learning safely routes the item to human review.
 
-## Portfolio API examples
-
-See [docs/API_PORTFOLIO.md](docs/API_PORTFOLIO.md) for CV-ready project bullets and sanitized request/response examples.
