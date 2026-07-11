@@ -176,6 +176,4 @@ npm start
 - OpenAI and Gemini remain optional providers. Hybrid mode tries `huggingface,gemini,openai` by default.
 - If Hugging Face is unavailable or unconfigured, adaptive learning safely routes the item to human review.
 
-## Public Documentation
 
-This README is the public project overview. Private notes and deep system-reference files stay in the local `docs/` folder and are intentionally ignored by Git.
