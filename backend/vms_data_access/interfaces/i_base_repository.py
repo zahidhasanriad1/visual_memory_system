@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Sequence
+
+TEntity = TypeVar("TEntity")
+
+class IBaseRepository(ABC, Generic[TEntity]):
+    @abstractmethod
+    async def add_async(self, entity: TEntity) -> TEntity: ...
+    @abstractmethod
+    async def get_by_id_async(self, entity_id: str) -> TEntity | None: ...
+    @abstractmethod
+    async def list_async(self, limit: int = 100, offset: int = 0) -> Sequence[TEntity]: ...
+    @abstractmethod
+    async def delete_async(self, entity: TEntity) -> None: ...
+    @abstractmethod
+    async def save_changes_async(self) -> None: ...

@@ -1,0 +1,92 @@
+<section class="vms-page dashboard-page">
+  <div class="vms-heading">
+    <div>
+      <h1>Dashboard</h1>
+    </div>
+    <a class="vms-button" routerLink="/image-features">Open Image Pipeline</a>
+  </div>
+
+  <div class="vms-stat-grid">
+    @for (card of visibleCards; track card.title) {
+      <article class="vms-stat">
+        <span>{{ card.title }}</span>
+        <strong>{{ card.value }}</strong>
+      </article>
+    }
+  </div>
+
+  <section class="image-history vms-card">
+    <div class="history-heading">
+      <div>
+        <span>Image Runs</span>
+        <h2>Tested & Detected Images</h2>
+      </div>
+      <button class="vms-button subtle" type="button" (click)="loadDashboardImages()">
+        Refresh
+      </button>
+    </div>
+
+    @if (imageDashboardError) {
+      <p class="history-state error">{{ imageDashboardError }}</p>
+    } @else if (isLoadingImageDashboard) {
+      <p class="history-state">Loading image runs...</p>
+    } @else {
+      <div class="history-stats">
+        <article>
+          <span>Sources</span>
+          <strong>{{ imageDashboard?.source_image_count ?? 0 }}</strong>
+        </article>
+        <article>
+          <span>Detections</span>
+          <strong>{{ imageDashboard?.detection_count ?? 0 }}</strong>
+        </article>
+        <article>
+          <span>Annotated</span>
+          <strong>{{ imageDashboard?.annotated_image_count ?? 0 }}</strong>
+        </article>
+        <article>
+          <span>Crops</span>
+          <strong>{{ imageDashboard?.crop_image_count ?? 0 }}</strong>
+        </article>
+      </div>
+
+      @if (imageDashboardItems.length) {
+        <div class="filter-tabs" aria-label="Image history filters">
+          @for (filter of imageFilters; track filter.value) {
+            <button
+              type="button"
+              [class.active]="activeImageFilter === filter.value"
+              (click)="activeImageFilter = filter.value"
+            >
+              {{ filter.label }}
+              <span>{{ filterCount(filter.value) }}</span>
+            </button>
+          }
+        </div>
+
+        <div class="filename-list">
+          @for (item of filteredImageDashboardItems; track item.request_id) {
+            <article class="filename-row">
+              <strong>{{ item.source_filename }}</strong>
+            </article>
+          } @empty {
+            <p class="history-state">No image files match this filter.</p>
+          }
+        </div>
+      } @else {
+        <p class="history-state">No image test runs found yet.</p>
+      }
+    }
+  </section>
+
+  <div class="module-grid">
+    @for (module of visibleModules; track module.path) {
+      <a class="module vms-card" [routerLink]="module.path">
+        <div>
+          <h2>{{ module.title }}</h2>
+        </div>
+        <strong>{{ module.status }}</strong>
+      </a>
+    }
+  </div>
+</section>

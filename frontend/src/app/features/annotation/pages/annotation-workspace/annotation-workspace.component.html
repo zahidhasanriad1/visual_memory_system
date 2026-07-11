@@ -1,0 +1,155 @@
+<section class="annotation-studio">
+  <header class="studio-header">
+    <div>
+      <p>Dataset annotation</p>
+      <h1>Annotation Studio</h1>
+      <span>{{ activeProject?.name || 'Select a project and task' }}</span>
+    </div>
+    <div class="header-actions">
+      <select [(ngModel)]="selectedProjectId" (ngModelChange)="selectProject($event)">
+        <option value="">All projects</option>
+        @for (project of projects; track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select>
+      <button type="button" (click)="reload()" [disabled]="isLoading">
+        {{ isLoading ? 'Loading…' : 'Refresh' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="studio-grid">
+    <aside class="panel queue-panel">
+      <div class="panel-title"><h2>Tasks</h2><strong>{{ filteredTasks.length }}</strong></div>
+      <div class="queue-tabs">
+        @for (filter of ['all', 'pending', 'approved']; track filter) {
+          <button type="button" [class.active]="queueFilter === filter" (click)="queueFilter = $any(filter)">
+            {{ filter }}
+          </button>
+        }
+      </div>
+      <div class="task-list">
+        @for (task of filteredTasks; track task.id) {
+          <button type="button" [class.active]="task.id === activeTask?.id" (click)="selectTask(task)">
+            <span>{{ task.source_type }}</span>
+            <strong>{{ task.frame_number !== null ? 'Frame ' + task.frame_number : shortId(task.id) }}</strong>
+            <small>{{ task.status }}</small>
+          </button>
+        } @empty { <div class="empty">No tasks in this queue.</div> }
+      </div>
+    </aside>
+
+    <main class="canvas-shell">
+      <div class="toolbar">
+        <div class="tool-group">
+          @for (tool of ['select', 'box', 'polygon', 'pan']; track tool) {
+            <button type="button" [class.active]="activeTool === tool" (click)="setTool($any(tool))">
+              {{ tool }}
+            </button>
+          }
+        </div>
+        <div class="tool-group compact">
+          <button type="button" (click)="zoom = zoom - 0.1" [disabled]="zoom <= 0.6">−</button>
+          <strong>{{ zoomPercent }}</strong>
+          <button type="button" (click)="zoom = zoom + 0.1" [disabled]="zoom >= 2">+</button>
+          <button *ngIf="activeTool === 'polygon'" type="button" (click)="undoPolygonPoint()">Undo</button>
+          <button *ngIf="activeTool === 'polygon'" type="button" (click)="finishPolygon()">Close</button>
+        </div>
+        <button class="primary" type="button" (click)="saveObject()" [disabled]="!activeTask || isSaving">
+          {{ isSaving ? 'Saving…' : 'Save annotation' }}
+        </button>
+      </div>
+
+      <section class="canvas-stage">
+        <div class="image-frame" [style.aspect-ratio]="imageAspectRatio" [style.transform]="'scale(' + zoom + ')'">
+          <img *ngIf="activeImageUrl" [src]="activeImageUrl" alt="Annotation source" (load)="onImageLoad($event)" />
+          <div class="no-image" *ngIf="!activeImageUrl">
+            <strong>{{ activeTask ? 'Preview unavailable' : 'Select a task' }}</strong>
+            <span>Dataset images appear here through secure media URLs.</span>
+          </div>
+          <svg
+            class="annotation-layer"
+            [attr.viewBox]="'0 0 ' + imageWidth + ' ' + imageHeight"
+            preserveAspectRatio="none"
+            (pointerdown)="onCanvasPointerDown($event)"
+            (pointermove)="onCanvasPointerMove($event)"
+            (pointerup)="onCanvasPointerUp($event)"
+          >
+            @for (object of activeObjects; track object.id) {
+              <g (pointerdown)="selectObject(object, $event)" [class.selected]="object.id === selectedObject?.id">
+                <rect *ngIf="object.geometry_type !== 'polygon'" [attr.x]="boxX(object)" [attr.y]="boxY(object)"
+                  [attr.width]="boxWidth(object)" [attr.height]="boxHeight(object)" [style.stroke]="labelColor(object.label)" />
+                <polygon *ngIf="object.geometry_type === 'polygon'" [attr.points]="objectPolygonPoints(object)"
+                  [style.stroke]="labelColor(object.label)" />
+                <text [attr.x]="boxX(object) + 6" [attr.y]="boxY(object) > 25 ? boxY(object) - 7 : 18">{{ object.label }}</text>
+              </g>
+            }
+            <rect *ngIf="activeTool === 'box' && (isDrawingBox || draftBox.x_max > draftBox.x_min)"
+              class="draft" [attr.x]="draftBox.x_min" [attr.y]="draftBox.y_min"
+              [attr.width]="draftBox.x_max - draftBox.x_min" [attr.height]="draftBox.y_max - draftBox.y_min" />
+            <polyline *ngIf="activeTool === 'polygon' && polygonPoints.length" class="draft"
+              [attr.points]="draftPolygonPoints" />
+            @for (point of polygonPoints; track $index) {
+              <circle class="vertex" [attr.cx]="point[0]" [attr.cy]="point[1]" r="5" />
+            }
+          </svg>
+        </div>
+      </section>
+
+      <footer class="status-strip">
+        <span>Task {{ activeTask ? shortId(activeTask.id) : 'none' }}</span>
+        <span>{{ activeObjects.length }} annotations</span>
+        <span>{{ imageWidth }}×{{ imageHeight }}</span>
+        <span>{{ activeTool }}</span>
+      </footer>
+    </main>
+
+    <aside class="panel inspector-panel">
+      <div class="panel-title"><h2>Labels</h2><strong>{{ labels.length }}</strong></div>
+      <div class="add-label">
+        <input [(ngModel)]="newLabel" placeholder="New object class" (keyup.enter)="addLabel()" />
+        <button type="button" (click)="addLabel()">Add</button>
+      </div>
+      <div class="label-list">
+        @for (label of labels; track label) {
+          <button type="button" [class.active]="label === selectedLabel" (click)="selectedLabel = label">
+            <i [style.background]="labelColor(label)"></i><span>{{ label }}</span>
+          </button>
+        }
+      </div>
+
+      <section class="inspector-section">
+        <h3>{{ activeTool === 'polygon' ? 'Polygon' : 'Bounding box' }}</h3>
+        <label>Selected label <input [(ngModel)]="selectedLabel" /></label>
+        <div class="coord-grid" *ngIf="activeTool !== 'polygon'">
+          <label>X1<input type="number" [(ngModel)]="draftBox.x_min" /></label>
+          <label>Y1<input type="number" [(ngModel)]="draftBox.y_min" /></label>
+          <label>X2<input type="number" [(ngModel)]="draftBox.x_max" /></label>
+          <label>Y2<input type="number" [(ngModel)]="draftBox.y_max" /></label>
+        </div>
+        <p *ngIf="activeTool === 'polygon'">{{ polygonPoints.length }} vertices · click around the object boundary</p>
+      </section>
+
+      <section class="inspector-section object-review" *ngIf="selectedObject">
+        <h3>Review annotation</h3>
+        <strong>{{ selectedObject.label }}</strong>
+        <span class="status" [class]="selectedObject.status">{{ selectedObject.status }}</span>
+        <div class="review-actions">
+          <button type="button" class="approve" (click)="reviewSelected('approved')">Approve</button>
+          <button type="button" class="reject" (click)="reviewSelected('rejected')">Reject</button>
+          <button type="button" (click)="deleteSelected()">Delete</button>
+        </div>
+      </section>
+
+      <div class="object-list">
+        @for (object of activeObjects; track object.id) {
+          <button type="button" [class.active]="object.id === selectedObject?.id" (click)="selectObject(object)">
+            <i [style.background]="labelColor(object.label)"></i>
+            <span><strong>{{ object.label }}</strong><small>{{ object.geometry_type }} · {{ object.status }}</small></span>
+          </button>
+        }
+      </div>
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </aside>
+  </div>
+</section>

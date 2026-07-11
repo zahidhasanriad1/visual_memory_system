@@ -1,0 +1,275 @@
+<section class="image-features-page">
+  <div class="page-heading">
+    <h1>Image Feature Pipeline</h1>
+  </div>
+
+  <div class="workspace">
+    <form class="panel control-panel" [formGroup]="form">
+      <label class="upload-box">
+        <input
+          type="file"
+          accept=".jpg,.jpeg,.png,.bmp,.webp,.tif,.tiff,image/*"
+          (change)="onFileSelected($event)"
+        />
+
+        <strong>Select image</strong>
+        <span>{{ selectedFileName }}</span>
+      </label>
+
+      <div class="preview-box" *ngIf="previewUrl">
+        <img [src]="previewUrl" alt="Selected image preview" />
+      </div>
+
+      <div class="detector-selector" role="radiogroup" aria-label="Detector model">
+        @for (option of detectorOptions; track option.value) {
+          <label [class.active]="form.controls.detectorModel.value === option.value">
+            <input type="radio" formControlName="detectorModel" [value]="option.value" />
+            <span>{{ option.label }}</span>
+          </label>
+        }
+      </div>
+
+      <div class="settings-grid">
+        <label>
+          Confidence threshold
+          <input type="number" step="0.01" min="0" max="1" formControlName="confidenceThreshold" />
+        </label>
+
+        <label>
+          IoU threshold
+          <input type="number" step="0.01" min="0" max="1" formControlName="iouThreshold" />
+        </label>
+
+        <label>
+          Crop padding
+          <input type="number" min="0" formControlName="cropPaddingPixels" />
+        </label>
+
+        <label>
+          Search top K
+          <input type="number" min="1" formControlName="topK" />
+        </label>
+      </div>
+
+      <div class="action-grid">
+        <button type="button" (click)="runAction('crop')" [disabled]="isLoading" [class.active]="activeAction === 'crop'">
+          Test Crop
+        </button>
+
+        <button type="button" (click)="runAction('detection')" [disabled]="isLoading" [class.active]="activeAction === 'detection'">
+          Test Detection
+        </button>
+
+        <button type="button" (click)="runAction('detection-crop')" [disabled]="isLoading" [class.active]="activeAction === 'detection-crop'">
+          Detection Crops
+        </button>
+
+        <button type="button" (click)="runAction('ingest-memory')" [disabled]="isLoading" [class.active]="activeAction === 'ingest-memory'">
+          Ingest Memory
+        </button>
+
+        <button type="button" (click)="runAction('search-memory')" [disabled]="isLoading" [class.active]="activeAction === 'search-memory'">
+          Search Memory
+        </button>
+      </div>
+
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </form>
+
+    <aside
+      class="panel result-panel"
+      [class.result-skydet]="resultDetectorKey === 'skydet'"
+    >
+      <div class="result-heading">
+        <div>
+          <h2>{{ result?.source_filename || 'Result' }}</h2>
+        </div>
+
+        <strong *ngIf="result">{{ result.status }}</strong>
+      </div>
+
+      <div class="loading" *ngIf="isLoading">
+        <b>{{ activeActionLabel }}</b>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && !result">
+        No result yet
+      </div>
+
+      <ng-container *ngIf="result">
+        <div class="detector-result-banner">
+          <div>
+            <span>Detector used</span>
+            <strong>{{ resultDetectorLabel }}</strong>
+          </div>
+          <span class="model-state" [class.ready]="result.model_loaded">
+            {{ result.model_loaded ? 'Model loaded' : 'Model not loaded' }}
+          </span>
+        </div>
+
+        <div class="notice success">
+          {{ result.message }}
+        </div>
+
+        <div class="notice warning" *ngIf="result.detector_warning">
+          {{ result.detector_warning }}
+        </div>
+
+        <div class="notice error-notice" *ngIf="detectorMismatch">
+          Requested {{ requestedDetectorLabel }}, but the backend used
+          {{ resultDetectorLabel }}. The result below is kept visible, but check the detector
+          configuration before relying on it.
+        </div>
+
+        <div class="visual-result" *ngIf="resultImageUrl">
+          <img
+            [src]="resultImageUrl"
+            [alt]="resultDetectorLabel + ' image detection result'"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </div>
+
+        <div class="summary-grid">
+          @for (item of resultInfoItems; track item.label) {
+            <article>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          }
+        </div>
+
+        <section class="result-section" *ngIf="topDetectionItems.length">
+          <div class="section-title">
+            <h3>Top Detections</h3>
+            <span>
+              Showing {{ topDetectionItems.length }} of {{ result.detections.length }}
+            </span>
+          </div>
+
+          <div class="detection-list">
+            @for (detection of topDetectionItems; track detection.detection_id) {
+              <article
+                [class.confidence-high]="detection.confidence >= 0.7"
+                [class.confidence-medium]="
+                  detection.confidence >= 0.4 && detection.confidence < 0.7
+                "
+              >
+                <div class="detection-copy">
+                  <div class="detection-name">
+                    <span>Class {{ detection.class_id ?? 'n/a' }}</span>
+                    <strong>{{ detection.class_name }}</strong>
+                  </div>
+                  <div class="detection-details">
+                    <span><b>Box</b> {{ bboxText(detection.bbox) }}</span>
+                    <span><b>Area</b> {{ bboxSizeText(detection.bbox) }}</span>
+                    <code [title]="detection.detection_id">
+                      ID {{ detection.detection_id }}
+                    </code>
+                  </div>
+                </div>
+                <div class="confidence-value">
+                  <span>Confidence</span>
+                  <b>{{ confidencePercent(detection.confidence) }}</b>
+                  <small>{{ detection.confidence | number: '1.3-6' }}</small>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="result-section" *ngIf="result.crops.length">
+          <div class="section-title">
+            <h3>Crops</h3>
+            <span>{{ result.crops.length }} generated</span>
+          </div>
+
+          <div class="crop-grid">
+            @for (crop of visibleCropItems; track crop.crop_id) {
+              <article>
+                <img
+                  *ngIf="mediaUrl(crop.crop_url) as cropUrl"
+                  [src]="cropUrl"
+                  [alt]="crop.class_name + ' crop'"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="crop-details">
+                  <div>
+                    <strong>{{ crop.class_name }}</strong>
+                    <b>{{ confidencePercent(crop.confidence) }}</b>
+                  </div>
+                  <span>{{ bboxText(crop.bbox) }} | {{ bboxSizeText(crop.bbox) }}</span>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="result-section" *ngIf="result.memory_items.length">
+          <div class="section-title">
+            <h3>Memory Items</h3>
+            <span>{{ result.memory_items.length }} saved</span>
+          </div>
+
+          <div class="memory-list">
+            @for (item of visibleMemoryItemList; track item.memory_id) {
+              <article>
+                <img
+                  *ngIf="mediaUrl(item.crop_url || item.source_image_url) as itemUrl"
+                  [src]="itemUrl"
+                  [alt]="item.class_name + ' memory item'"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div>
+                  <strong>{{ item.class_name }}</strong>
+                  <span>{{ item.source_filename }}</span>
+                </div>
+                <b>{{ confidencePercent(item.confidence) }}</b>
+              </article>
+            }
+          </div>
+        </section>
+
+        <section class="result-section" *ngIf="result.matches.length">
+          <div class="section-title">
+            <h3>Search Matches</h3>
+            <span>{{ result.matches.length }} returned</span>
+          </div>
+
+          <div class="memory-list">
+            @for (match of visibleMatchItems; track match.memory_id) {
+              <article>
+                <img
+                  *ngIf="mediaUrl(match.crop_url || match.source_image_url) as matchUrl"
+                  [src]="matchUrl"
+                  [alt]="match.class_name + ' match'"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div>
+                  <strong>{{ match.class_name }}</strong>
+                  <span>{{ match.source_filename }}</span>
+                </div>
+                <b>{{ confidencePercent(match.similarity_score) }}</b>
+              </article>
+            }
+          </div>
+        </section>
+
+        <div
+          class="empty-inline"
+          *ngIf="
+            !result.detections.length &&
+            !result.crops.length &&
+            !result.memory_items.length &&
+            !result.matches.length
+          "
+        >
+          No objects were returned for this action. Try lowering confidence threshold or use Test Crop.
+        </div>
+      </ng-container>
+    </aside>
+  </div>
+</section>

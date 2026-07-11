@@ -1,0 +1,338 @@
+<section class="cloud-ai-page">
+  <div class="page-heading">
+    <h1>Cloud AI + Hugging Face Intelligence</h1>
+    <button type="button" class="primary-button" (click)="checkConnectivity()" [disabled]="isConnectivityLoading">
+      {{ isConnectivityLoading ? 'Testing providers…' : 'Test API connections' }}
+    </button>
+  </div>
+
+  <div class="health-card connectivity" *ngIf="connectivity.length">
+    @for (item of connectivity; track item.provider) {
+      <article [class.connected]="item.connected" [class.failed]="item.configured && !item.connected">
+        <span>{{ item.provider }}</span>
+        <strong>{{ item.connected ? 'Connected' : item.configured ? 'Action needed' : 'Not configured' }}</strong>
+        <small>{{ item.message }} <i *ngIf="item.latency_ms">{{ item.latency_ms }} ms</i></small>
+      </article>
+    }
+  </div>
+
+  <div class="health-card" *ngIf="health">
+    <article>
+      <span>Status</span>
+      <strong>{{ health.status }}</strong>
+    </article>
+
+    <article>
+      <span>Default</span>
+      <strong>{{ health.default_provider }}</strong>
+    </article>
+
+    <article>
+      <span>Hugging Face</span>
+      <strong>{{ health.huggingface_enabled ? 'Configured' : 'Off' }}</strong>
+    </article>
+
+    <article>
+      <span>Gemini</span>
+      <strong>{{ health.gemini_enabled ? 'Configured' : 'Off' }}</strong>
+    </article>
+
+    <article>
+      <span>OpenAI</span>
+      <strong>{{ health.openai_enabled ? 'Configured' : 'Off' }}</strong>
+    </article>
+  </div>
+
+  <form class="global-panel" [formGroup]="form">
+    <label>
+      Provider
+      <select formControlName="provider">
+        <option value="hybrid">Hybrid</option>
+        <option value="huggingface">Hugging Face</option>
+        <option value="gemini">Gemini</option>
+        <option value="openai">OpenAI</option>
+      </select>
+    </label>
+
+    <label>
+      Context
+      <input
+        type="text"
+        formControlName="context"
+        placeholder="Optional context"
+      />
+    </label>
+  </form>
+
+  <div class="workspace-grid">
+    <section class="panel">
+      <h2>Image Analysis</h2>
+
+      <label class="upload-box">
+        <input
+          type="file"
+          accept=".jpg,.jpeg,.png,.bmp,.webp,.tif,.tiff,image/*"
+          (change)="onFileSelected($event)"
+        />
+        <strong>Select image</strong>
+        <span>{{ selectedFileName }}</span>
+      </label>
+
+      <div class="preview-box" *ngIf="previewUrl">
+        <img [src]="previewUrl" alt="Cloud AI image preview" />
+      </div>
+
+      <div class="settings-grid">
+        <label>
+          Image Agent
+          <select formControlName="imageAgentName">
+            <option value="scene_understanding">Scene Understanding</option>
+            <option value="object_metadata">Object Metadata</option>
+            <option value="safety_review">Safety Review</option>
+            <option value="memory_query">Memory Query</option>
+          </select>
+        </label>
+
+        <label>
+          Detail
+          <select formControlName="detail">
+            <option value="auto">Auto</option>
+            <option value="low">Low</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <button type="button" class="primary-button" (click)="analyzeImage()" [disabled]="isImageLoading">
+        {{ isImageLoading ? 'Analyzing...' : 'Analyze Image' }}
+      </button>
+
+      <div class="result-box" *ngIf="imageResult">
+        <div class="result-title">
+          <div>
+            <span>{{ imageResult.provider_result.provider }}</span>
+            <h3>Image AI Result</h3>
+          </div>
+          <strong>{{ imageResult.provider_result.model }}</strong>
+        </div>
+
+        <div class="result-meta">
+          <article>
+            <span>File</span>
+            <strong>{{ imageResult.original_filename }}</strong>
+          </article>
+          <article>
+            <span>Agent</span>
+            <strong>{{ imageResult.provider_result.agent_name }}</strong>
+          </article>
+        </div>
+
+        <div
+          class="insight-dashboard"
+          *ngIf="resultHasParsedJson(imageResult.provider_result.parsed_json); else imageRawOutput"
+        >
+          <article class="summary-card">
+            <span>Scene Summary</span>
+            <strong>
+              {{
+                textValue(imageResult.provider_result.parsed_json, [
+                  'scene_summary',
+                  'object_caption',
+                  'query_caption',
+                  'summary'
+                ])
+              }}
+            </strong>
+          </article>
+
+          <div class="metric-grid">
+            <article>
+              <span>Risk Level</span>
+              <strong class="risk-pill" [ngClass]="riskClass(imageResult.provider_result.parsed_json)">
+                {{ riskValue(imageResult.provider_result.parsed_json) }}
+              </strong>
+            </article>
+            <article>
+              <span>Environment</span>
+              <strong>{{ textValue(imageResult.provider_result.parsed_json, ['environment']) }}</strong>
+            </article>
+            <article>
+              <span>Objects</span>
+              <strong>{{ objectSummary(imageResult.provider_result.parsed_json) }}</strong>
+            </article>
+            <article>
+              <span>Possible Class</span>
+              <strong>{{ textValue(imageResult.provider_result.parsed_json, ['possible_class']) }}</strong>
+            </article>
+          </div>
+
+          <section class="chip-section" *ngIf="listValue(imageResult.provider_result.parsed_json, 'semantic_tags').length">
+            <span>Semantic Tags</span>
+            <div>
+              <strong *ngFor="let tag of listValue(imageResult.provider_result.parsed_json, 'semantic_tags')">
+                {{ tag }}
+              </strong>
+            </div>
+          </section>
+
+          <section class="chip-section" *ngIf="listValue(imageResult.provider_result.parsed_json, 'risk_reasons').length">
+            <span>Risk Reasons</span>
+            <div>
+              <strong *ngFor="let reason of listValue(imageResult.provider_result.parsed_json, 'risk_reasons')">
+                {{ reason }}
+              </strong>
+            </div>
+          </section>
+
+          <article class="summary-card">
+            <span>Reasoning</span>
+            <strong>
+              {{
+                textValue(imageResult.provider_result.parsed_json, [
+                  'reasoning_note',
+                  'confidence_note',
+                  'recommended_review_action'
+                ])
+              }}
+            </strong>
+          </article>
+        </div>
+
+        <ng-template #imageRawOutput>
+          <p class="ai-output">{{ imageResult.provider_result.output_text }}</p>
+        </ng-template>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Video Report Summarizer</h2>
+
+      <label>
+        Report Agent
+        <select formControlName="reportAgentName">
+          <option value="video_timeline_summary">Video Timeline Summary</option>
+          <option value="safety_review">Safety Review</option>
+          <option value="memory_query">Memory Query</option>
+          <option value="scene_understanding">General Summary</option>
+        </select>
+      </label>
+
+      <label class="textarea-label">
+        Paste report text / JSON
+        <textarea
+          rows="13"
+          formControlName="reportText"
+          placeholder="Paste report text"
+        ></textarea>
+      </label>
+
+      <button type="button" class="primary-button" (click)="summarizeReport()" [disabled]="isReportLoading">
+        {{ isReportLoading ? 'Summarizing...' : 'Summarize Report' }}
+      </button>
+
+      <div class="result-box" *ngIf="reportResult">
+        <div class="result-title">
+          <div>
+            <span>{{ reportResult.provider_result.provider }}</span>
+            <h3>Report AI Result</h3>
+          </div>
+          <strong>{{ reportResult.provider_result.model }}</strong>
+        </div>
+
+        <div class="result-meta">
+          <article>
+            <span>Agent</span>
+            <strong>{{ reportResult.provider_result.agent_name }}</strong>
+          </article>
+          <article>
+            <span>Provider</span>
+            <strong>{{ reportResult.provider_result.provider }}</strong>
+          </article>
+        </div>
+
+        <div
+          class="insight-dashboard"
+          *ngIf="resultHasParsedJson(reportResult.provider_result.parsed_json); else reportRawOutput"
+        >
+          <article class="summary-card">
+            <span>Summary</span>
+            <strong>
+              {{
+                textValue(reportResult.provider_result.parsed_json, [
+                  'video_summary',
+                  'search_summary',
+                  'summary'
+                ])
+              }}
+            </strong>
+          </article>
+
+          <div class="metric-grid">
+            <article>
+              <span>Risk Level</span>
+              <strong class="risk-pill" [ngClass]="riskClass(reportResult.provider_result.parsed_json)">
+                {{ riskValue(reportResult.provider_result.parsed_json) }}
+              </strong>
+            </article>
+            <article>
+              <span>Recommended Action</span>
+              <strong>
+                {{
+                  textValue(reportResult.provider_result.parsed_json, [
+                    'recommended_next_action',
+                    'recommended_review_action',
+                    'timeline_relevance'
+                  ])
+                }}
+              </strong>
+            </article>
+          </div>
+
+          <section class="chip-section" *ngIf="listValue(reportResult.provider_result.parsed_json, 'main_events').length">
+            <span>Main Events</span>
+            <div>
+              <strong *ngFor="let event of listValue(reportResult.provider_result.parsed_json, 'main_events')">
+                {{ event }}
+              </strong>
+            </div>
+          </section>
+
+          <section class="chip-section" *ngIf="listValue(reportResult.provider_result.parsed_json, 'semantic_tags').length">
+            <span>Semantic Tags</span>
+            <div>
+              <strong *ngFor="let tag of listValue(reportResult.provider_result.parsed_json, 'semantic_tags')">
+                {{ tag }}
+              </strong>
+            </div>
+          </section>
+
+          <section class="chip-section" *ngIf="listValue(reportResult.provider_result.parsed_json, 'search_terms').length">
+            <span>Search Terms</span>
+            <div>
+              <strong *ngFor="let term of listValue(reportResult.provider_result.parsed_json, 'search_terms')">
+                {{ term }}
+              </strong>
+            </div>
+          </section>
+        </div>
+
+        <ng-template #reportRawOutput>
+          <p class="ai-output">{{ reportResult.provider_result.output_text }}</p>
+        </ng-template>
+      </div>
+    </section>
+  </div>
+
+  <section class="agents-panel" *ngIf="agents.length">
+    <h2>Agents</h2>
+
+    <div class="agent-grid">
+      <article *ngFor="let agent of agents">
+        <h3>{{ agent.display_name }}</h3>
+        <span>{{ agent.agent_name }}</span>
+      </article>
+    </div>
+  </section>
+
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+</section>

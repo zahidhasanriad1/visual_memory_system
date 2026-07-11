@@ -1,0 +1,122 @@
+<section class="vms-page video-memory-page">
+  <div class="vms-heading">
+    <div>
+      <h1>Video Timeline Processor</h1>
+    </div>
+
+    <button class="vms-button" type="button" (click)="start()" [disabled]="isStarting">
+      {{ isStarting ? 'Starting...' : 'Start Job' }}
+    </button>
+  </div>
+
+  <div class="workspace">
+    <form class="vms-card control-panel" [formGroup]="form" (ngSubmit)="start()">
+      <label class="upload-box">
+        <input type="file" accept="video/*,.m4v" (change)="pick($event)" />
+        <strong>{{ fileName }}</strong>
+      </label>
+
+      <div class="detector-selector" role="radiogroup" aria-label="Detector model">
+        @for (option of detectorOptions; track option.value) {
+          <label [class.active]="form.controls.detector_model.value === option.value">
+            <input type="radio" formControlName="detector_model" [value]="option.value" />
+            <span>{{ option.label }}</span>
+          </label>
+        }
+      </div>
+
+      <div class="settings-grid">
+        <label class="vms-label">
+          Processing mode
+          <select class="vms-input" formControlName="processing_mode">
+            @for (option of modeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="vms-label">
+          Max frames
+          <input class="vms-input" type="number" min="0" formControlName="max_frames" />
+        </label>
+
+        <label class="vms-label">
+          Confidence
+          <input
+            class="vms-input"
+            type="number"
+            min="0"
+            max="1"
+            step="0.01"
+            formControlName="confidence_threshold"
+          />
+        </label>
+
+        <label class="vms-label">
+          Output FPS
+          <input class="vms-input" type="number" min="0" step="0.1" formControlName="output_video_fps" />
+        </label>
+      </div>
+
+      <button class="vms-button submit-button" type="submit" [disabled]="isStarting">
+        {{ isStarting ? 'Creating job...' : 'Run Video Memory' }}
+      </button>
+    </form>
+
+    <aside class="vms-card result-panel">
+      <div class="panel-title">
+        <div>
+          <h2>{{ status?.job_id || 'No active job' }}</h2>
+        </div>
+        <strong *ngIf="status">{{ status.status }}</strong>
+      </div>
+
+      <div class="empty-state" *ngIf="!status && !result">
+        No active job
+      </div>
+
+      <section class="progress-card" *ngIf="status">
+        <div class="progress-head">
+          <span>Progress</span>
+          <strong>{{ status.progress_percent | number: '1.0-0' }}%</strong>
+        </div>
+        <div class="progress-bar">
+          <span [style.width.%]="status.progress_percent"></span>
+        </div>
+        <p>{{ status.message }}</p>
+        <p class="error-text" *ngIf="status.error">{{ status.error }}</p>
+      </section>
+
+      <div class="result-grid" *ngIf="result">
+        <article>
+          <span>Detector</span>
+          <strong>{{ result.detector_model }}</strong>
+        </article>
+        <article>
+          <span>Mode</span>
+          <strong>{{ result.processing_mode }}</strong>
+        </article>
+        <article>
+          <span>FPS</span>
+          <strong>{{ result.fps }}</strong>
+        </article>
+        <article>
+          <span>Total Frames</span>
+          <strong>{{ result.total_video_frames }}</strong>
+        </article>
+        <article>
+          <span>Processed</span>
+          <strong>{{ result.processed_frame_count }}</strong>
+        </article>
+        <article>
+          <span>Duration</span>
+          <strong>{{ result.duration_seconds | number: '1.1-1' }}s</strong>
+        </article>
+        <article>
+          <span>Tracked</span>
+          <strong>{{ result.total_tracked_object_count }}</strong>
+        </article>
+      </div>
+    </aside>
+  </div>
+</section>
