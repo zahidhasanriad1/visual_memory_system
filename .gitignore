@@ -17,6 +17,9 @@ frontend/.angular/
 backend/storage/
 storage/
 
+# Private project notes
+docs/
+
 # Editor/OS noise
 .DS_Store
 Thumbs.db
