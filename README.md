@@ -2,13 +2,7 @@
 
 VMS-X is an industry-grade FastAPI + Angular platform for full-timeline video intelligence, object tracking, visual memory, VLM-assisted open-world object naming, human-in-the-loop annotation, dataset versioning, training orchestration, and safe model registry activation.
 
-
-
 ## Visual Documentation
-
-- [Project Owner](#project-owner)
-- [Professional Skills](#professional-skills)
-- [Tech Stack](#tech-stack)
 - [System Architecture](#system-architecture)
 - [Main User Workflow](#main-user-workflow)
 - [Runtime Request Lifecycle](#runtime-request-lifecycle)
